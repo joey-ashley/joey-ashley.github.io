@@ -1,0 +1,70 @@
+# ============================================================
+# Projects data file
+# ------------------------------------------------------------
+# Add a new entry here whenever you ship something worth showing.
+# Your projects.md page loops over this list and renders cards.
+#
+# Schema (per entry):
+#   name:        (required) Display name of the project
+#   tagline:     (required) One-line description, ~10 words
+#   description: (optional) Longer paragraph for detail view
+#   year:        (required) YYYY — used for sorting
+#   role:        (optional) Your role, e.g. "Solo developer", "Tech lead"
+#   stack:       (optional) List of technologies used
+#   url:         (optional) Live demo or production link
+#   repo:        (optional) Source code link
+#   image:       (optional) Path to screenshot, e.g. /assets/images/foo.png
+#   featured:    (optional) true to highlight on the homepage
+#   status:      (optional) "live" | "archived" | "wip"
+# ============================================================
+
+- name: Project Atlas
+  tagline: Interactive map of every coffee shop I've worked from.
+  description: >-
+    A side project built to learn Mapbox and PostGIS. Aggregates check-ins
+    from a personal log and renders them as a heatmap, with notes on
+    wifi quality and noise level.
+  year: 2025
+  role: Solo developer
+  stack:
+    - Next.js
+    - Mapbox GL
+    - PostgreSQL
+    - PostGIS
+  url: https://atlas.example.com
+  repo: https://github.com/your-username/atlas
+  image: /assets/images/atlas.png
+  featured: true
+  status: live
+
+- name: Tinywiki
+  tagline: A 200-line wiki engine that fits in a single file.
+  description: >-
+    Built as a weekend exercise in minimalism. Markdown files in, static
+    HTML out, with backlinks and a search index. Powers my personal notes.
+  year: 2024
+  role: Solo developer
+  stack:
+    - Python
+    - Markdown
+  repo: https://github.com/your-username/tinywiki
+  image: /assets/images/tinywiki.png
+  featured: true
+  status: live
+
+- name: Conference Talk — "Boring Tech Wins"
+  tagline: 25-minute talk on choosing unfashionable tools.
+  year: 2024
+  role: Speaker
+  url: https://youtube.com/watch?v=example
+  status: live
+
+- name: Old Blog Engine
+  tagline: A custom Ruby blog engine I used from 2019–2023.
+  year: 2019
+  role: Solo developer
+  stack:
+    - Ruby
+    - Sinatra
+  repo: https://github.com/your-username/old-blog
+  status: archived

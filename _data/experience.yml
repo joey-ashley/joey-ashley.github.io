@@ -1,0 +1,71 @@
+# ============================================================
+# Experience data file
+# ------------------------------------------------------------
+# Work history rendered on the resume page (and reusable elsewhere).
+#
+# Schema (per entry):
+#   role:        (required) Job title
+#   company:     (required) Employer name
+#   company_url: (optional) Link to company site
+#   location:    (optional) City or "Remote"
+#   start:       (required) YYYY-MM
+#   end:         (optional) YYYY-MM, or omit for "Present"
+#   summary:     (required) One- or two-sentence overview of the role
+#   highlights:  (optional) List of specific accomplishments — favor
+#                concrete outcomes ("cut p99 latency from 800ms to 120ms")
+#                over vague responsibilities ("worked on performance")
+#   stack:       (optional) Key technologies used
+# ============================================================
+
+- role: Senior Software Engineer
+  company: Example Corp
+  company_url: https://example.com
+  location: Remote
+  start: 2023-03
+  summary: >-
+    Lead engineer on the data ingestion platform, processing ~2B events/day
+    across 40 customer integrations.
+  highlights:
+    - Redesigned the ingestion pipeline to use Kafka + Flink, cutting
+      end-to-end latency from 8 minutes to under 30 seconds.
+    - Mentored three junior engineers; two were promoted within 18 months.
+    - Owned the on-call rotation redesign that reduced after-hours pages
+      by 60%.
+  stack:
+    - Go
+    - Kafka
+    - Flink
+    - PostgreSQL
+    - AWS
+
+- role: Software Engineer
+  company: Earlier Co
+  company_url: https://earlier.example.com
+  location: City, Country
+  start: 2020-06
+  end: 2023-02
+  summary: >-
+    Full-stack engineer on the billing team. Touched everything from
+    Stripe integrations to invoice PDF generation.
+  highlights:
+    - Built the dunning system that recovered ~$1.2M ARR in its first year.
+    - Migrated the billing service from a monolith to its own service
+      with zero customer-visible downtime.
+  stack:
+    - Python
+    - Django
+    - React
+    - PostgreSQL
+
+- role: Junior Developer
+  company: First Job Inc
+  location: City, Country
+  start: 2018-09
+  end: 2020-05
+  summary: >-
+    First professional role. Worked across the stack on an internal
+    analytics tool used by ~200 staff.
+  stack:
+    - JavaScript
+    - Node.js
+    - MongoDB
