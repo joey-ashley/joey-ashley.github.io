@@ -1,31 +1,31 @@
 # ============================================================
 # Site settings
 # ============================================================
-title: Your Name
-tagline: Software engineer, designer, etc.
+title: Joseph Ashley
+tagline: Principal Systems Engineer
 description: >-
   A short paragraph describing who you are and what this site is for.
   This shows up in search engine results and social media previews.
-url: "https://your-username.github.io"   # No trailing slash
+url: "https://joey-ashley.github.io"   # No trailing slash
 baseurl: ""                               # Leave blank for user/org sites
 
 # ============================================================
 # Author / contact
 # ============================================================
 author:
-  name: Your Name
-  email: you@example.com
+  name: Joseph Ashley
+  email: joseph.ashley@pm.me
   bio: One-sentence bio for sidebars and footers.
   avatar: /assets/images/avatar.jpg
   location: City, Country
 
 # Social links — used in footer and meta tags
 social:
-  github: your-username
-  linkedin: your-handle
-  twitter: your-handle      # Optional, remove if unused
-  mastodon: ""              # e.g. "@you@mastodon.social"
-  email: you@example.com
+  github: joey-ashley
+  #linkedin: your-handle
+  #twitter: your-handle      # Optional, remove if unused
+  #mastodon: ""              # e.g. "@you@mastodon.social"
+  email: joseph.ashley@pm.me
 
 # ============================================================
 # Build settings
