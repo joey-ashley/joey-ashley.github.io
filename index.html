@@ -5,25 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Joseph Ashley</title>
   <meta name="description" content="Joseph Ashley, principal systems engineer. Systems and networks for federal customers; a home lab run entirely as code.">
-  <style>
-    :root { color-scheme: light dark; --fg: #1b1b1b; --muted: #5a5a5a; --bg: #fbfaf7; --link: #0b4f8a; --rule: #d9d6cf; }
-    @media (prefers-color-scheme: dark) { :root { --fg: #e8e6e1; --muted: #a7a49d; --bg: #161717; --link: #7fb3e0; --rule: #333; } }
-    html { background: var(--bg); color: var(--fg); font: 18px/1.55 Georgia, "Times New Roman", serif; }
-    body { max-width: 38rem; margin: 0 auto; padding: 4rem 1rem 3rem; }
-    h1 { font-size: 1.6rem; font-weight: normal; margin: 0 0 0.25rem; letter-spacing: 0.01em; }
-    .role { color: var(--muted); margin: 0 0 2rem; }
-    p { margin: 0 0 1.1rem; }
-    a { color: var(--link); text-decoration: underline; text-underline-offset: 0.15em; }
-    footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.9rem; }
-    footer a { margin-right: 1.25rem; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <nav aria-label="Pages">
+    <a href="./" aria-current="page">Home</a>
+    <a href="lab.html">How I run the lab</a>
+    <a href="resume.html">Resume</a>
+  </nav>
   <main>
     <h1>Joseph Ashley</h1>
     <p class="role">Principal systems engineer</p>
     <p>I design, automate, and harden systems and networks for federal customers.</p>
-    <p>At home I run a lab entirely as code: Proxmox VE, OpenTofu, Ansible, PowerDNS, a step-ca certificate authority, and Tailscale, with every change landing by pull request. The tree is private; a read-only copy is available on request.</p>
+    <p>At home I run a lab entirely as code: Proxmox VE, OpenTofu, Ansible, PowerDNS, a step-ca certificate authority, and Tailscale, with every change landing by pull request. <a href="lab.html">How I run the lab</a> says how. The tree is private; a read-only copy is available on request.</p>
     <p>Degrees in physics and applied mathematics.</p>
   </main>
   <footer>

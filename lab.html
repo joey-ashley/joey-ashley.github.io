@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How I run the lab</title>
+  <meta name="description" content="A home lab run as code: intent compiled by generators into OpenTofu, Ansible, and DNS, applied by pull request.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav aria-label="Pages">
+    <a href="./">Home</a>
+    <a href="lab.html" aria-current="page">How I run the lab</a>
+    <a href="resume.html">Resume</a>
+  </nav>
+  <main>
+    <h1>How I run the lab</h1>
+    <p class="role">One repository, treated as a compiler</p>
+
+    <p>The lab is a few Proxmox VE hosts, the guests on them, the network between them, and the services that make a site out of it: name resolution, time, a certificate authority, backups, remote access. None of it is configured by hand. A single Git repository holds a description of the site, and tooling turns that description into the running thing.</p>
+
+    <h2>The idea</h2>
+    <p>The repository has two kinds of source. <em>Intent</em> says what exists: sites, network segments, address blocks, devices, hosts, services. <em>Policy</em> says who may reach what: zones, a reachability matrix, rule sets. Both are plain files, checked against a schema, and written in no tool's vocabulary.</p>
+    <p>Generators read those files and write the inputs of each tool in that tool's own shape: variables for OpenTofu, an inventory and group variables for Ansible, zone data for the DNS servers, a client map for SSH. OpenTofu and Ansible are adapters. A root or a role never carries a fact of its own; if it needs one, the fact goes into intent and the generator hands it over.</p>
+
+    <figure>
+      <svg viewBox="0 0 720 300" role="img" aria-labelledby="flow-title">
+        <title id="flow-title">Intent and policy flow through generators into tool inputs, pass the gates in a pull request, and are applied to the site.</title>
+        <defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" opacity="0.55"/></marker></defs>
+        <rect class="box" x="10" y="40" width="130" height="60" rx="4"/>
+        <text class="label" x="75" y="65" text-anchor="middle">intent</text>
+        <text class="small" x="75" y="83" text-anchor="middle">what exists</text>
+        <rect class="box" x="10" y="130" width="130" height="60" rx="4"/>
+        <text class="label" x="75" y="155" text-anchor="middle">policy</text>
+        <text class="small" x="75" y="173" text-anchor="middle">who may reach what</text>
+        <path class="arrow" d="M140,70 C180,70 180,115 215,115"/>
+        <path class="arrow" d="M140,160 C180,160 180,115 215,115"/>
+        <rect class="box" x="220" y="85" width="120" height="60" rx="4"/>
+        <text class="label" x="280" y="110" text-anchor="middle">generators</text>
+        <text class="small" x="280" y="128" text-anchor="middle">deterministic</text>
+        <path class="arrow" d="M340,115 C370,115 370,45 405,45"/>
+        <path class="arrow" d="M340,115 L405,115"/>
+        <path class="arrow" d="M340,115 C370,115 370,185 405,185"/>
+        <rect class="box" x="410" y="20" width="130" height="50" rx="4"/>
+        <text class="label" x="475" y="42" text-anchor="middle">OpenTofu</text>
+        <text class="small" x="475" y="58" text-anchor="middle">variables</text>
+        <rect class="box" x="410" y="90" width="130" height="50" rx="4"/>
+        <text class="label" x="475" y="112" text-anchor="middle">Ansible</text>
+        <text class="small" x="475" y="128" text-anchor="middle">inventory, vars</text>
+        <rect class="box" x="410" y="160" width="130" height="50" rx="4"/>
+        <text class="label" x="475" y="182" text-anchor="middle">DNS</text>
+        <text class="small" x="475" y="198" text-anchor="middle">zone data</text>
+        <path class="arrow" d="M540,45 C575,45 575,115 605,115"/>
+        <path class="arrow" d="M540,115 L605,115"/>
+        <path class="arrow" d="M540,185 C575,185 575,115 605,115"/>
+        <rect class="box" x="610" y="85" width="100" height="60" rx="4"/>
+        <text class="label" x="660" y="110" text-anchor="middle">the site</text>
+        <text class="small" x="660" y="128" text-anchor="middle">applied</text>
+        <rect x="10" y="240" width="700" height="44" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 4"/>
+        <text class="small" x="360" y="258" text-anchor="middle">every change is a pull request, and it merges only when the gates pass:</text>
+        <text class="small" x="360" y="275" text-anchor="middle">lint · generate (a stale generated file fails) · test · validate</text>
+      </svg>
+      <figcaption>The flow of a change. Generated files are committed, so a reviewer sees what the tools will receive.</figcaption>
+    </figure>
+
+    <h2>How a change lands</h2>
+    <ol>
+      <li>Branch, and change intent, policy, or adapter code.</li>
+      <li>Run the generators, the linters, and the tests locally. Commit the generated files with the change that caused them.</li>
+      <li>Open a pull request. CI runs the same gates: formatting and lint for every language in the tree, a schema check, a name lint against a naming standard, a rebuild of every generated file that fails on any difference, the test suite, and a plan of each OpenTofu root against a mocked provider.</li>
+      <li>Merge is approval to apply. The apply runs from a control node through the same task targets the pipeline uses, so nothing is possible by hand that the pipeline cannot repeat.</li>
+    </ol>
+
+    <h2>Rules that do not bend</h2>
+    <ul>
+      <li>State never enters Git. It lives in an object store, encrypted before it leaves the control node, with a second encrypted copy elsewhere.</li>
+      <li>Secrets exist only as files encrypted with SOPS and age, to hardware keys. A credential-looking string anywhere else fails the secrets gate.</li>
+      <li>A generated file is never edited by hand. The build regenerates it and fails on a difference.</li>
+      <li>Every name passes a lint against a written naming standard before it exists.</li>
+      <li>Commits are signed, and the main branch accepts only pull requests with passing checks.</li>
+      <li>A decision that outlives the day it was made becomes a dated record, with the context, the options, the decision, and its consequences. Reversing one means a new record and the code change in the same pull request.</li>
+    </ul>
+
+    <h2>Why it is built this way</h2>
+    <p>A home lab is a place to practice the craft under a real constraint: the household depends on the result, and there is one person to run it. The method above is what makes that tractable. The tree says what the site is, the pipeline proves the tree, and a rebuild from nothing is a documented path rather than a memory. When the site breaks, the question is never "what did I change", because the answer is always in Git.</p>
+    <p>The repository is private. A read-only copy is available on request.</p>
+  </main>
+  <footer>
+    <a href="https://github.com/joey-ashley" rel="me">GitHub</a>
+  </footer>
+</body>
+</html>
