@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How I run the lab · Joseph Ashley</title>
-  <meta name="description" content="A home lab run as code: intent compiled by generators into OpenTofu, Ansible, and DNS, applied by pull request.">
+  <meta name="description" content="How I run a home lab as code: one description of the site, generators that turn it into OpenTofu, Ansible, and DNS configuration, and a pull request for every change.">
   <link rel="canonical" href="https://joey-ashley.github.io/lab.html">
   <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#161717" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
   <meta property="og:title" content="How I run the lab · Joseph Ashley">
-  <meta property="og:description" content="A home lab run as code: intent compiled by generators into OpenTofu, Ansible, and DNS, applied by pull request.">
+  <meta property="og:description" content="How I run a home lab as code: one description of the site, generators that turn it into OpenTofu, Ansible, and DNS configuration, and a pull request for every change.">
   <meta property="og:url" content="https://joey-ashley.github.io/lab.html">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -23,13 +23,13 @@
   </nav>
   <main id="main">
     <h1>How I run the lab</h1>
-    <p class="role">One repository, treated as a compiler</p>
+    <p class="role">One repository describes the whole site</p>
 
-    <p>The lab is a few Proxmox VE hosts, the guests on them, the network between them, and the services that make a site out of it: name resolution, time, a certificate authority, backups, remote access. None of it is configured by hand. A single Git repository holds a description of the site, and tooling turns that description into the running thing.</p>
+    <p>The lab is a handful of Proxmox VE hosts, the guests running on them, the network between them, and the services that turn a pile of hardware into a site: DNS, time, a certificate authority, backups, and remote access. I don't configure any of it by hand. One Git repository describes the site, and tooling turns that description into the running thing.</p>
 
     <h2>The idea</h2>
-    <p>The repository has two kinds of source. <em>Intent</em> says what exists: sites, network segments, address blocks, devices, hosts, services. <em>Policy</em> says who may reach what: zones, a reachability matrix, rule sets. Both are plain files, checked against a schema, and written in no tool's vocabulary.</p>
-    <p>Generators read those files and write the inputs of each tool in that tool's own shape: variables for OpenTofu, an inventory and group variables for Ansible, zone data for the DNS servers, a client map for SSH. OpenTofu and Ansible are adapters. A root or a role never carries a fact of its own; if it needs one, the fact goes into intent and the generator hands it over.</p>
+    <p>There are two kinds of source in the repository. The first I call <em>intent</em>: what exists, meaning sites, network segments, address blocks, devices, hosts, and services. The second is <em>policy</em>: who is allowed to reach what, written as zones, a reachability matrix, and rule sets. Both are plain text files, validated against a schema, and deliberately written in no particular tool's vocabulary.</p>
+    <p>Generators read those files and write out what each tool wants, in the shape it wants: variables for OpenTofu, an inventory and group variables for Ansible, zone data for the DNS servers, a client map for SSH. That makes OpenTofu and Ansible adapters rather than sources of truth. If a root module or a role needs a fact, the fact gets added to intent and the generator passes it along. Nothing is hard-coded on the tool side.</p>
 
     <figure>
       <svg viewBox="0 0 720 300" role="img" aria-labelledby="flow-title">
@@ -68,30 +68,30 @@
         <text class="small" x="360" y="258" text-anchor="middle">every change is a pull request, and it merges only when the gates pass:</text>
         <text class="small" x="360" y="275" text-anchor="middle">lint · generate (a stale generated file fails) · test · validate</text>
       </svg>
-      <figcaption>The flow of a change. Generated files are committed, so a reviewer sees what the tools will receive.</figcaption>
+      <figcaption>How a change flows through. The generated files are committed too, so a reviewer can see exactly what the tools will get.</figcaption>
     </figure>
 
     <h2>How a change lands</h2>
     <ol>
-      <li>Branch, and change intent, policy, or adapter code.</li>
-      <li>Run the generators, the linters, and the tests locally. Commit the generated files with the change that caused them.</li>
-      <li>Open a pull request. CI runs the same gates: formatting and lint for every language in the tree, a schema check, a name lint against a naming standard, a rebuild of every generated file that fails on any difference, the test suite, and a plan of each OpenTofu root against a mocked provider.</li>
-      <li>Merge is approval to apply. The apply runs from a control node through the same task targets the pipeline uses, so nothing is possible by hand that the pipeline cannot repeat.</li>
+      <li>Make a branch and change whatever needs changing: intent, policy, or the adapter code.</li>
+      <li>Run the generators, linters, and tests locally, then commit the generated files alongside the change that produced them.</li>
+      <li>Open a pull request. CI runs the same checks I ran locally, plus a few more: formatting and lint for every language in the tree, schema validation, a check that every name follows the naming standard, a rebuild of all generated files (any difference fails the build), the test suite, and a plan of each OpenTofu root against a mocked provider.</li>
+      <li>Merging is the approval to apply. The apply runs from a control node using the same task targets the pipeline uses, so there's no way to do something by hand that the pipeline couldn't do again.</li>
     </ol>
 
-    <h2>Rules that do not bend</h2>
+    <h2>Rules I don't break</h2>
     <ul>
-      <li>State never enters Git. It lives in an object store, encrypted before it leaves the control node, with a second encrypted copy elsewhere.</li>
-      <li>Secrets exist only as files encrypted with SOPS and age, to hardware keys. A credential-looking string anywhere else fails the secrets gate.</li>
-      <li>A generated file is never edited by hand. The build regenerates it and fails on a difference.</li>
-      <li>Every name passes a lint against a written naming standard before it exists.</li>
-      <li>Commits are signed, and the main branch accepts only pull requests with passing checks.</li>
-      <li>A decision that outlives the day it was made becomes a dated record, with the context, the options, the decision, and its consequences. Reversing one means a new record and the code change in the same pull request.</li>
+      <li>State never goes into Git. It lives in an object store, encrypted before it leaves the control node, and there's a second encrypted copy somewhere else.</li>
+      <li>Secrets only exist as files encrypted with SOPS and age, to hardware keys. Anything that looks like a credential anywhere else fails the secrets check.</li>
+      <li>I never hand-edit a generated file. The build regenerates everything and fails if anything differs.</li>
+      <li>Every name gets checked against a written naming standard before it can exist.</li>
+      <li>Commits are signed, and main only takes pull requests with passing checks.</li>
+      <li>Any decision that will matter past the day I made it gets written up as a dated record: the context, the options I considered, what I chose, and what that costs. Reversing one means writing a new record and shipping it in the same pull request as the code change.</li>
     </ul>
 
-    <h2>Why it is built this way</h2>
-    <p>A home lab is a place to practice the craft under a real constraint: the household depends on the result, and there is one person to run it. The method above is what makes that tractable. The tree says what the site is, the pipeline proves the tree, and a rebuild from nothing is a documented path rather than a memory. When the site breaks, the question is never "what did I change", because the answer is always in Git.</p>
-    <p>The repository is private. A read-only copy is available on request.</p>
+    <h2>Why I do it this way</h2>
+    <p>Partly because it's good practice. Mostly because the household actually depends on this stuff, and I'm the only one running it. If I did it by hand I'd be relying on memory, and memory is what fails late at night when DNS is down. This way the repository says what the site is supposed to be, the pipeline checks that it's true, and rebuilding from scratch is a documented procedure instead of a weekend of guessing. When something breaks, I don't have to wonder what I changed. It's in the Git log.</p>
+    <p>The repository is private, but I'm happy to share a read-only copy if you ask.</p>
   </main>
   <footer>
     <a href="https://github.com/joey-ashley" rel="me">GitHub</a>
