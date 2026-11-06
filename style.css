@@ -34,3 +34,12 @@ footer a { margin-right: 1.25rem; }
   a { color: inherit; text-decoration: none; }
   .role, .dates, figcaption, .small { color: #444; }
 }
+nav.sub { margin-top: -1.75rem; margin-bottom: 2.5rem; font-size: 0.9rem; }
+nav.sub a[aria-current="page"] { text-decoration: none; }
+nav a[aria-current="true"] { color: var(--fg); }
+.cell { fill: none; stroke: var(--rule); stroke-width: 1; }
+.cell.same { fill: var(--box); }
+.full { fill: var(--fg); }
+.narrow { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+.closed { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
