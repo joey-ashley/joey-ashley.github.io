@@ -6,6 +6,7 @@ A static site, served by GitHub Pages from `main`. No build: `.nojekyll` tells P
 | --- | --- |
 | `index.html` | Home |
 | `lab.html` | How I run the lab |
+| `lab-security.html` | Security: zones, the matrix, and the way in |
 | `resume.html` | Resume, summarized |
 | `404.html` | Served by Pages when a path does not exist |
 | `style.css` | The one stylesheet, with a print layout for the resume |

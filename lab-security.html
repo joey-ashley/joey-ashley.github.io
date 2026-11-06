@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security · Joseph Ashley</title>
+  <meta name="description" content="How the home lab is segmented: ten firewall zones by trust, a matrix that blocks by default, named rule sets, and no open port on the WAN.">
+  <link rel="canonical" href="https://joey-ashley.github.io/lab-security.html">
+  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161717" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Security · Joseph Ashley">
+  <meta property="og:description" content="How the home lab is segmented: ten firewall zones by trust, a matrix that blocks by default, named rule sets, and no open port on the WAN.">
+  <meta property="og:url" content="https://joey-ashley.github.io/lab-security.html">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <nav aria-label="Pages">
+    <a href="./">Home</a>
+    <a href="lab.html" aria-current="true">The lab</a>
+    <a href="resume.html">Resume</a>
+  </nav>
+  <nav class="sub" aria-label="Lab pages">
+    <a href="lab.html">How I run it</a>
+    <a href="lab-security.html" aria-current="page">Security</a>
+  </nav>
+  <main id="main">
+    <h1>Security</h1>
+    <p class="role">Ten zones, one matrix, and nothing open on the WAN</p>
+
+    <p>The <a href="lab.html">lab page</a> says that policy is "who is allowed to reach what", written as zones, a reachability matrix, and rule sets. This page is what that looks like. The gateway is the only firewall between segments. The switches don't filter, and each guest has a host firewall of its own on top. Every rule the gateway holds comes from three plain text files in the repository, and the files are checked against a schema like everything else.</p>
+
+    <h2>Zones are trust levels, not VLANs</h2>
+    <p>The first version of the design had a zone for every VLAN: twelve custom zones plus the built-in ones, which works out to 182 ordered pairs in the matrix, each one set by hand. I threw that out and grouped the sixteen VLANs by how much I trust what's on them. Five custom zones came out of it:</p>
+    <ul>
+      <li><strong>infra</strong>, the management plane: the network gear, the hypervisor nodes, the backup servers, the out-of-band controllers and the PDU, the control node, and the CI runners.</li>
+      <li><strong>services</strong>: every platform service, and the security plane alongside it.</li>
+      <li><strong>people</strong>: the family's devices and the admin laptop.</li>
+      <li><strong>things</strong>: smart home gear, printers, cameras, and the TVs.</li>
+      <li><strong>isolated</strong>: the cluster heartbeat VLAN, the storage VLAN, and quarantine. Reaches nothing, reached by nothing. These exist as zones at all only because the controller can't create a network without a gateway interface, so the zone is what takes the route away.</li>
+    </ul>
+    <p>The built-in zones keep their jobs. DMZ holds the one host that talks to the public. Hotspot holds guests and the employer-issued laptops, with no captive portal, and clients in it can't see each other. VPN is the break-glass WireGuard path. External is the WAN. The built-in Internal zone, where the controller's default between networks is allow-all, is kept empty on purpose, so a new network can't land somewhere permissive by accident.</p>
+    <p>When two networks in one zone need different treatment, that's a policy scoped to the network inside the zone pair, never a new zone. The cameras are fenced inside <em>things</em> that way: no internet, no resolver, and only the recorder pulls from them. The security segment is fenced inside <em>services</em> the same way.</p>
+
+    <h2>The matrix</h2>
+    <p>Every ordered pair of zones is blocked unless a row in the matrix opens it, and every pair ends in the controller's own built-in block rather than one of mine. That last detail matters: the controller places a derived return-traffic policy below every user policy, so a user-written block at the end of a pair would shadow the return traffic of the reverse pair's allows. Learned the hard way, now written down.</p>
+
+    <figure>
+<svg viewBox="0 0 538 502" role="img" aria-labelledby="matrix-title" aria-describedby="matrix-desc">
+<title id="matrix-title">The zone matrix: which zones may start a conversation with which.</title>
+<desc id="matrix-desc">Rows are the zone a connection starts from and columns the zone it goes to. Most cells are empty, meaning blocked by default. A filled circle is an open pair, an open circle is a pair narrowed to named rule sets, and a cross is a pair where a built-in allow is closed on purpose.</desc>
+<text class="small" x="328.0" y="22" text-anchor="middle">to</text>
+<text class="small" x="18" y="296.0" text-anchor="start">from</text>
+<text class="label" x="148.0" y="78" text-anchor="middle">EXT</text>
+<text class="label" x="188.0" y="78" text-anchor="middle">GW</text>
+<text class="label" x="228.0" y="78" text-anchor="middle">VPN</text>
+<text class="label" x="268.0" y="78" text-anchor="middle">HOT</text>
+<text class="label" x="308.0" y="78" text-anchor="middle">DMZ</text>
+<text class="label" x="348.0" y="78" text-anchor="middle">INF</text>
+<text class="label" x="388.0" y="78" text-anchor="middle">SVC</text>
+<text class="label" x="428.0" y="78" text-anchor="middle">PPL</text>
+<text class="label" x="468.0" y="78" text-anchor="middle">THG</text>
+<text class="label" x="508.0" y="78" text-anchor="middle">ISO</text>
+<text class="label" x="118" y="117.0" text-anchor="end">EXT</text>
+<text class="label" x="118" y="157.0" text-anchor="end">GW</text>
+<text class="label" x="118" y="197.0" text-anchor="end">VPN</text>
+<text class="label" x="118" y="237.0" text-anchor="end">HOT</text>
+<text class="label" x="118" y="277.0" text-anchor="end">DMZ</text>
+<text class="label" x="118" y="317.0" text-anchor="end">INF</text>
+<text class="label" x="118" y="357.0" text-anchor="end">SVC</text>
+<text class="label" x="118" y="397.0" text-anchor="end">PPL</text>
+<text class="label" x="118" y="437.0" text-anchor="end">THG</text>
+<text class="label" x="118" y="477.0" text-anchor="end">ISO</text>
+<rect class="cell same" x="128" y="92" width="40" height="40"/>
+<rect class="cell" x="168" y="92" width="40" height="40"/>
+<rect class="cell" x="208" y="92" width="40" height="40"/>
+<rect class="cell" x="248" y="92" width="40" height="40"/>
+<rect class="cell" x="288" y="92" width="40" height="40"/>
+<rect class="cell" x="328" y="92" width="40" height="40"/>
+<rect class="cell" x="368" y="92" width="40" height="40"/>
+<rect class="cell" x="408" y="92" width="40" height="40"/>
+<rect class="cell" x="448" y="92" width="40" height="40"/>
+<rect class="cell" x="488" y="92" width="40" height="40"/>
+<rect class="cell" x="128" y="132" width="40" height="40"/>
+<circle class="full" cx="148.0" cy="152.0" r="9"/>
+<rect class="cell same" x="168" y="132" width="40" height="40"/>
+<rect class="cell" x="208" y="132" width="40" height="40"/>
+<rect class="cell" x="248" y="132" width="40" height="40"/>
+<rect class="cell" x="288" y="132" width="40" height="40"/>
+<rect class="cell" x="328" y="132" width="40" height="40"/>
+<rect class="cell" x="368" y="132" width="40" height="40"/>
+<rect class="cell" x="408" y="132" width="40" height="40"/>
+<rect class="cell" x="448" y="132" width="40" height="40"/>
+<rect class="cell" x="488" y="132" width="40" height="40"/>
+<rect class="cell" x="128" y="172" width="40" height="40"/>
+<path class="closed" d="M141.0,185.0 L155.0,199.0 M155.0,185.0 L141.0,199.0"/>
+<rect class="cell" x="168" y="172" width="40" height="40"/>
+<circle class="full" cx="188.0" cy="192.0" r="9"/>
+<rect class="cell same" x="208" y="172" width="40" height="40"/>
+<rect class="cell" x="248" y="172" width="40" height="40"/>
+<rect class="cell" x="288" y="172" width="40" height="40"/>
+<circle class="full" cx="308.0" cy="192.0" r="9"/>
+<rect class="cell" x="328" y="172" width="40" height="40"/>
+<circle class="full" cx="348.0" cy="192.0" r="9"/>
+<rect class="cell" x="368" y="172" width="40" height="40"/>
+<circle class="full" cx="388.0" cy="192.0" r="9"/>
+<rect class="cell" x="408" y="172" width="40" height="40"/>
+<rect class="cell" x="448" y="172" width="40" height="40"/>
+<rect class="cell" x="488" y="172" width="40" height="40"/>
+<rect class="cell" x="128" y="212" width="40" height="40"/>
+<circle class="narrow" cx="148.0" cy="232.0" r="9"/>
+<rect class="cell" x="168" y="212" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="232.0" r="9"/>
+<rect class="cell" x="208" y="212" width="40" height="40"/>
+<rect class="cell same" x="248" y="212" width="40" height="40"/>
+<rect class="cell" x="288" y="212" width="40" height="40"/>
+<rect class="cell" x="328" y="212" width="40" height="40"/>
+<rect class="cell" x="368" y="212" width="40" height="40"/>
+<rect class="cell" x="408" y="212" width="40" height="40"/>
+<rect class="cell" x="448" y="212" width="40" height="40"/>
+<circle class="narrow" cx="468.0" cy="232.0" r="9"/>
+<rect class="cell" x="488" y="212" width="40" height="40"/>
+<rect class="cell" x="128" y="252" width="40" height="40"/>
+<circle class="narrow" cx="148.0" cy="272.0" r="9"/>
+<rect class="cell" x="168" y="252" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="272.0" r="9"/>
+<rect class="cell" x="208" y="252" width="40" height="40"/>
+<rect class="cell" x="248" y="252" width="40" height="40"/>
+<rect class="cell same" x="288" y="252" width="40" height="40"/>
+<rect class="cell" x="328" y="252" width="40" height="40"/>
+<rect class="cell" x="368" y="252" width="40" height="40"/>
+<circle class="narrow" cx="388.0" cy="272.0" r="9"/>
+<rect class="cell" x="408" y="252" width="40" height="40"/>
+<rect class="cell" x="448" y="252" width="40" height="40"/>
+<rect class="cell" x="488" y="252" width="40" height="40"/>
+<rect class="cell" x="128" y="292" width="40" height="40"/>
+<circle class="narrow" cx="148.0" cy="312.0" r="9"/>
+<rect class="cell" x="168" y="292" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="312.0" r="9"/>
+<rect class="cell" x="208" y="292" width="40" height="40"/>
+<rect class="cell" x="248" y="292" width="40" height="40"/>
+<rect class="cell" x="288" y="292" width="40" height="40"/>
+<rect class="cell" x="328" y="292" width="40" height="40"/>
+<circle class="narrow" cx="348.0" cy="312.0" r="9"/>
+<rect class="cell" x="368" y="292" width="40" height="40"/>
+<circle class="narrow" cx="388.0" cy="312.0" r="9"/>
+<rect class="cell" x="408" y="292" width="40" height="40"/>
+<rect class="cell" x="448" y="292" width="40" height="40"/>
+<rect class="cell" x="488" y="292" width="40" height="40"/>
+<rect class="cell" x="128" y="332" width="40" height="40"/>
+<circle class="narrow" cx="148.0" cy="352.0" r="9"/>
+<rect class="cell" x="168" y="332" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="352.0" r="9"/>
+<rect class="cell" x="208" y="332" width="40" height="40"/>
+<rect class="cell" x="248" y="332" width="40" height="40"/>
+<rect class="cell" x="288" y="332" width="40" height="40"/>
+<circle class="narrow" cx="308.0" cy="352.0" r="9"/>
+<rect class="cell" x="328" y="332" width="40" height="40"/>
+<circle class="narrow" cx="348.0" cy="352.0" r="9"/>
+<rect class="cell" x="368" y="332" width="40" height="40"/>
+<circle class="narrow" cx="388.0" cy="352.0" r="9"/>
+<rect class="cell" x="408" y="332" width="40" height="40"/>
+<rect class="cell" x="448" y="332" width="40" height="40"/>
+<circle class="narrow" cx="468.0" cy="352.0" r="9"/>
+<rect class="cell" x="488" y="332" width="40" height="40"/>
+<rect class="cell" x="128" y="372" width="40" height="40"/>
+<circle class="narrow" cx="148.0" cy="392.0" r="9"/>
+<rect class="cell" x="168" y="372" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="392.0" r="9"/>
+<rect class="cell" x="208" y="372" width="40" height="40"/>
+<rect class="cell" x="248" y="372" width="40" height="40"/>
+<rect class="cell" x="288" y="372" width="40" height="40"/>
+<circle class="narrow" cx="308.0" cy="392.0" r="9"/>
+<rect class="cell" x="328" y="372" width="40" height="40"/>
+<circle class="narrow" cx="348.0" cy="392.0" r="9"/>
+<rect class="cell" x="368" y="372" width="40" height="40"/>
+<circle class="narrow" cx="388.0" cy="392.0" r="9"/>
+<rect class="cell same" x="408" y="372" width="40" height="40"/>
+<rect class="cell" x="448" y="372" width="40" height="40"/>
+<circle class="full" cx="468.0" cy="392.0" r="9"/>
+<rect class="cell" x="488" y="372" width="40" height="40"/>
+<rect class="cell" x="128" y="412" width="40" height="40"/>
+<circle class="narrow" cx="148.0" cy="432.0" r="9"/>
+<rect class="cell" x="168" y="412" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="432.0" r="9"/>
+<rect class="cell" x="208" y="412" width="40" height="40"/>
+<rect class="cell" x="248" y="412" width="40" height="40"/>
+<rect class="cell" x="288" y="412" width="40" height="40"/>
+<rect class="cell" x="328" y="412" width="40" height="40"/>
+<rect class="cell" x="368" y="412" width="40" height="40"/>
+<circle class="narrow" cx="388.0" cy="432.0" r="9"/>
+<rect class="cell" x="408" y="412" width="40" height="40"/>
+<rect class="cell same" x="448" y="412" width="40" height="40"/>
+<rect class="cell" x="488" y="412" width="40" height="40"/>
+<rect class="cell" x="128" y="452" width="40" height="40"/>
+<path class="closed" d="M141.0,465.0 L155.0,479.0 M155.0,465.0 L141.0,479.0"/>
+<rect class="cell" x="168" y="452" width="40" height="40"/>
+<circle class="narrow" cx="188.0" cy="472.0" r="9"/>
+<rect class="cell" x="208" y="452" width="40" height="40"/>
+<rect class="cell" x="248" y="452" width="40" height="40"/>
+<rect class="cell" x="288" y="452" width="40" height="40"/>
+<rect class="cell" x="328" y="452" width="40" height="40"/>
+<rect class="cell" x="368" y="452" width="40" height="40"/>
+<rect class="cell" x="408" y="452" width="40" height="40"/>
+<rect class="cell" x="448" y="452" width="40" height="40"/>
+<rect class="cell same" x="488" y="452" width="40" height="40"/>
+</svg>
+      <figcaption>Rows are where a connection starts, columns where it goes. A filled circle is an open pair. An open circle is a pair narrowed to named rule sets. A cross is a built-in allow that I closed. Empty is the default: blocked. EXT is the WAN, GW the gateway itself, VPN the break-glass clients, HOT the hotspot zone, DMZ the tunnel client, INF infra, SVC services, PPL people, THG things, ISO isolated.</figcaption>
+    </figure>
+
+    <p>Most of the open circles are small. <em>things</em> may reach <em>services</em> for DNS and time, and for the home automation hub, and that's all. The DMZ may reach the three published targets on one port each, plus DNS and time. The hotspot zone may reach exactly one thing inside the house: the printer. The management plane may reach the services on the ports a deploy needs, from the control node and the runners by name, and the runners get a narrower set still, because they check the site and never apply to it.</p>
+    <p>A row in the matrix doesn't list ports. It names rule sets, joined with a plus sign, and the rule sets live in their own file. A rule set is a short list of protocol, ports, and optionally which hosts it applies to, by the host's name in intent. So <code>dns-ntp</code> means "53 and 853 to the two resolvers, 123 to the two time servers", and it means that in every row that uses it. When a resolver's address changes, nothing in policy changes.</p>
+
+    <h2>Egress is a policy too</h2>
+    <p>The site resolvers are the only way out for DNS. Every other zone that may reach the internet gets an egress rule set with a block for DNS, DNS over TLS, and SMTP above it, so a device can't quietly use a public resolver or send mail on its own. The cameras get no egress at all. The things zone gets the web and nothing else.</p>
+
+    <h2>The way in</h2>
+    <p>No port on the home WAN is open. There are three paths, each for a different purpose, and they're kept apart on purpose:</p>
+    <ol>
+      <li><strong>Admin access comes in over the tailnet.</strong> A pair of subnet routers on the services segment advertises the site's routed segments and nothing else. They rewrite the source address, so every connection from the tailnet arrives at a node or a guest looking like one of the two routers. The site admits the routers by their role, never by a tailnet address. Who may use that path is decided in the tailnet's access rules, by identity, not by which network someone is sitting on.</li>
+      <li><strong>Public applications go out, not in.</strong> The one host in the DMZ is a tunnel client that connects outward to a small VPS. The VPS terminates TLS for the handful of public names and forwards them down the tunnel to one address and one port each. Inside the site, the resolvers answer those same public names with the internal address, so a person at home never leaves the house to reach them.</li>
+      <li><strong>WireGuard on the gateway is break-glass.</strong> It exists for the day the tailnet is unreachable, it's an everyday path for nothing, and it gets tried once a quarter so I know it still works.</li>
+    </ol>
+
+    <h2>Keys, secrets, and certificates</h2>
+    <ul>
+      <li>Secrets exist only as files encrypted with SOPS and age, and the recipients are two hardware keys: the one on my keyring and the one in the desk drawer. Decrypting takes a PIN and a touch. A string that looks like a credential anywhere else in the tree fails CI.</li>
+      <li>Every internal host gets its certificate from the site's own step-ca. The issuing intermediate runs as a guest; the root key stays offline under the same two hardware keys. Internal names never appear in the public zone.</li>
+      <li>The CI runners hold no secret. They check the site over SSH and plan each infrastructure root against the real APIs, and they go back to a clean snapshot every night. They can't apply anything. Applying is a person, from a control node, after a merge.</li>
+      <li>Commits are signed, and the main branch takes nothing but a pull request with passing checks.</li>
+    </ul>
+
+    <h2>What's honestly still interim</h2>
+    <p>A design document that says everything is finished is lying. The matrix file carries a note on every row that isn't yet what the design says. Several pairs inside the management plane are still "allow all, with logging" while I watch a week of real flows before narrowing them, and two of the egress blocks are written down as owed rather than done. A separate plan tracks the difference between what the policy files say and what the controller holds today, and that difference is what the next pull requests close.</p>
+    <p>The design itself is a dated decision record in the repository: the context, the options I considered (one zone per VLAN, one zone per trust tier, or fewer still), what I chose, and what it cost. The record is why the matrix has 90 pairs instead of 182.</p>
+  </main>
+  <footer>
+    <a href="https://github.com/joey-ashley" rel="me">GitHub</a>
+  </footer>
+</body>
+</html>

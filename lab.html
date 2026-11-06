@@ -18,8 +18,12 @@
   <a class="skip" href="#main">Skip to content</a>
   <nav aria-label="Pages">
     <a href="./">Home</a>
-    <a href="lab.html" aria-current="page">How I run the lab</a>
+    <a href="lab.html" aria-current="true">The lab</a>
     <a href="resume.html">Resume</a>
+  </nav>
+  <nav class="sub" aria-label="Lab pages">
+    <a href="lab.html" aria-current="page">How I run it</a>
+    <a href="lab-security.html">Security</a>
   </nav>
   <main id="main">
     <h1>How I run the lab</h1>
@@ -28,7 +32,7 @@
     <p>The lab is a handful of Proxmox VE hosts, the guests running on them, the network between them, and the services that turn a pile of hardware into a site: DNS, time, a certificate authority, backups, and remote access. I don't configure any of it by hand. One Git repository describes the site, and tooling turns that description into the running thing.</p>
 
     <h2>The idea</h2>
-    <p>There are two kinds of source in the repository. The first I call <em>intent</em>: what exists, meaning sites, network segments, address blocks, devices, hosts, and services. The second is <em>policy</em>: who is allowed to reach what, written as zones, a reachability matrix, and rule sets. Both are plain text files, validated against a schema, and deliberately written in no particular tool's vocabulary.</p>
+    <p>There are two kinds of source in the repository. The first I call <em>intent</em>: what exists, meaning sites, network segments, address blocks, devices, hosts, and services. The second is <em>policy</em>: who is allowed to reach what, written as zones, a reachability matrix, and rule sets. The <a href="lab-security.html">security page</a> draws the matrix. Both are plain text files, validated against a schema, and deliberately written in no particular tool's vocabulary.</p>
     <p>Generators read those files and write out what each tool wants, in the shape it wants: variables for OpenTofu, an inventory and group variables for Ansible, zone data for the DNS servers, a client map for SSH. That makes OpenTofu and Ansible adapters rather than sources of truth. If a root module or a role needs a fact, the fact gets added to intent and the generator passes it along. Nothing is hard-coded on the tool side.</p>
 
     <figure>
