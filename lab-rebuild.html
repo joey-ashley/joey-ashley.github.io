@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rebuilding from nothing · Joseph Ashley</title>
+  <meta name="description" content="The nine stages that take the home lab from bare metal to a running site, what each one needs, and the proof that ends it. The shape of the runbooks, not the commands.">
+  <link rel="canonical" href="https://joey-ashley.github.io/lab-rebuild.html">
+  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161717" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Rebuilding from nothing · Joseph Ashley">
+  <meta property="og:description" content="The nine stages that take the home lab from bare metal to a running site, what each one needs, and the proof that ends it. The shape of the runbooks, not the commands.">
+  <meta property="og:url" content="https://joey-ashley.github.io/lab-rebuild.html">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <nav aria-label="Pages">
+    <a href="./">Home</a>
+    <a href="lab.html" aria-current="true">The lab</a>
+    <a href="resume.html">Resume</a>
+  </nav>
+  <nav class="sub" aria-label="Lab pages">
+    <a href="lab.html">How I run it</a>
+    <a href="lab-architecture.html">Architecture</a>
+    <a href="lab-security.html">Security</a>
+    <a href="lab-rebuild.html" aria-current="page">Rebuild</a>
+  </nav>
+  <main id="main">
+    <h1>Rebuilding from nothing</h1>
+    <p class="role">Nine stages, and what proves each one is done</p>
+
+    <p>The <a href="lab.html">lab page</a> claims that rebuilding from scratch is a documented procedure. This is the shape of that procedure. The real runbooks are in the private repository and are long, with the exact commands, the order of the reboots, and the things that bit me. What's here is the structure: what each stage needs, what it produces, and how I know it's finished before the next one starts.</p>
+
+    <h2>What has to survive</h2>
+    <p>A rebuild starts from five things that live outside the site, and the whole method depends on keeping it to five:</p>
+    <ul>
+      <li>The Git repository, hosted off-site.</li>
+      <li>The state of each infrastructure root, in an object store, encrypted. Plus the dated second copies.</li>
+      <li>Two hardware keys. Every secret in the tree is encrypted to both. Either one is enough.</li>
+      <li>A password manager, holding the object store's token, the keys' PINs, and nothing the tree could hold instead.</li>
+      <li>A laptop, which becomes the first control node.</li>
+    </ul>
+    <p>The path never depends on the guests it's about to build, and it never depends on the cluster to rebuild the cluster. While the cluster is down, the laptop resolves names through the resolver on the standalone lifeboat node, or through the gateway if that's gone too. That's the reason the lifeboat node exists.</p>
+
+    <figure>
+<svg viewBox="0 0 720 550" role="img" aria-labelledby="rb-title" aria-describedby="rb-desc">
+<title id="rb-title">The rebuild from nothing, in nine stages, each with the proof that ends it.</title>
+<desc id="rb-desc">Nine stages in order: a control node, secrets open, the network, the nodes, the cluster, the roots, the plays, the zones, and the drills. Each stage names what it does and the proof that it is done.</desc>
+<defs><marker id="rhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" opacity="0.55"/></marker></defs>
+<text class="small" x="40" y="24">stage</text>
+<text class="small" x="500" y="24">done when</text>
+<text class="label" x="22" y="62" text-anchor="middle">1</text>
+<rect class="box" x="40" y="36" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="54">A control node</text>
+<text class="small" x="52" y="70">the toolchain the tree pins, a hardware key, the environment file</text>
+<rect x="500" y="36" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="62">one line per requirement, all ok</text>
+<path class="arrow" d="M480,57 L500,57"/>
+<path class="arrow" d="M260,78 L260,90"/>
+<text class="label" x="22" y="116" text-anchor="middle">2</text>
+<rect class="box" x="40" y="90" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="108">Secrets open</text>
+<text class="small" x="52" y="124">a PIN and a touch; nothing in the tree is a secret</text>
+<rect x="500" y="90" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="116">a secret decrypts, checked by length</text>
+<path class="arrow" d="M480,111 L500,111"/>
+<path class="arrow" d="M260,132 L260,144"/>
+<text class="label" x="22" y="170" text-anchor="middle">3</text>
+<rect class="box" x="40" y="144" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="162">The network</text>
+<text class="small" x="52" y="178">port profiles before cabling; the zones on the gateway</text>
+<rect x="500" y="144" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="170">a cable into the gateway always works</text>
+<path class="arrow" d="M480,165 L500,165"/>
+<path class="arrow" d="M260,186 L260,198"/>
+<text class="label" x="22" y="224" text-anchor="middle">4</text>
+<rect class="box" x="40" y="198" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="216">The nodes</text>
+<text class="small" x="52" y="232">a console script in phases, then the node play</text>
+<rect x="500" y="198" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="224">the verify phase passes on each</text>
+<path class="arrow" d="M480,219 L500,219"/>
+<path class="arrow" d="M260,240 L260,252"/>
+<text class="label" x="22" y="278" text-anchor="middle">5</text>
+<rect class="box" x="40" y="252" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="270">The cluster</text>
+<text class="small" x="52" y="286">one node founds, the others join with fixed ids</text>
+<rect x="500" y="252" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="278">three of three, two links each</text>
+<path class="arrow" d="M480,273 L500,273"/>
+<path class="arrow" d="M260,294 L260,306"/>
+<text class="label" x="22" y="332" text-anchor="middle">6</text>
+<rect class="box" x="40" y="306" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="324">The roots</text>
+<text class="small" x="52" y="340">guests root per placement, then the platform root</text>
+<rect x="500" y="306" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="332">plan, apply, plan: no changes</text>
+<path class="arrow" d="M480,327 L500,327"/>
+<path class="arrow" d="M260,348 L260,360"/>
+<text class="label" x="22" y="386" text-anchor="middle">7</text>
+<rect class="box" x="40" y="360" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="378">The plays</text>
+<text class="small" x="52" y="394">names and time, then trust, then access, then the rest</text>
+<rect x="500" y="360" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="386">each service's live proof</text>
+<path class="arrow" d="M480,381 L500,381"/>
+<path class="arrow" d="M260,402 L260,414"/>
+<text class="label" x="22" y="440" text-anchor="middle">8</text>
+<rect class="box" x="40" y="414" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="432">The zones</text>
+<text class="small" x="52" y="448">pushed one server at a time, secondary first</text>
+<rect x="500" y="414" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="440">every name, forward and reverse, on all four</text>
+<path class="arrow" d="M480,435 L500,435"/>
+<path class="arrow" d="M260,456 L260,468"/>
+<text class="label" x="22" y="494" text-anchor="middle">9</text>
+<rect class="box" x="40" y="468" width="440" height="42" rx="4"/>
+<text class="label" x="52" y="486">The drills</text>
+<text class="small" x="52" y="502">migrate, restart one node at a time, pull one node's power</text>
+<rect x="500" y="468" width="210" height="42" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 3"/>
+<text class="small" x="510" y="494">timed, and written down</text>
+<path class="arrow" d="M480,489 L500,489"/>
+<text class="small" x="40" y="542">after every apply of a root: a second copy of its state, encrypted to the hardware keys, somewhere else</text>
+</svg>
+      <figcaption>The order, and the proof that closes each stage. Nothing in a later stage is needed to finish an earlier one.</figcaption>
+    </figure>
+
+    <h2>The stages</h2>
+    <ol>
+      <li><strong>A control node.</strong> Clone the repository. One script installs the toolchain the tree pins, down to the version of every tool, and prints no secret while it does it. Then the hardware key's identity file, an environment file with the object store credentials, SSH keys, and Git set up to sign. A check target prints one line per requirement, ok or missing, with the section of the runbook that fixes it. The stage ends when every line is ok.</li>
+      <li><strong>Secrets open.</strong> Prove the round trip: decrypt the one secrets file with a PIN and a touch. The proof checks the length of a value, never prints it. If this fails, nothing after it can run, so it's second and not sixth.</li>
+      <li><strong>The network.</strong> Port profiles on the switches before anything is cabled, so a node comes up on the right VLANs the first time. The gateway gets its zones and its matrix. The proof is a plain one: a cable into the gateway's untagged network always works, because that's the network every uplink carries.</li>
+      <li><strong>The nodes.</strong> The hypervisor goes on at the console from a script with named phases: a preflight that lists every drive by its stable path, a phase that builds the storage pool and refuses to touch the boot pool, a network phase that writes the bridges and bonds, and a verify phase. Between them a play from the control node sets the repositories, does the one full upgrade, and writes the hosts file so the nodes can find each other before DNS exists.</li>
+      <li><strong>The cluster.</strong> One node founds it and the others join, each with its node ID fixed in the command, so the order of the joins can't change the result. A node that joins must hold no guest. The proof is three of three in quorum with two heartbeat links on every node.</li>
+      <li><strong>The roots.</strong> A role and one API token per control node, into the environment file and never the tree. Then the guests root for each placement: it fetches the cloud image pinned by hash, builds a template on each node, and makes one guest per host in intent with a firewall generated from its declared services. Then the platform root, which adds the HA resources, the replication jobs, and the backup jobs. Guests first, because an HA resource needs its guest to exist. Every root is done the same way: plan, apply, plan, and the second plan says no changes. A plan that would destroy or replace anything is a stop, not a warning.</li>
+      <li><strong>The plays.</strong> The site play runs the services in dependency order: the authoritative name servers and the resolvers, the time servers, the certificate authority, the subnet routers and the tunnel client, then the backup server, the source of truth, the register, the home page, home automation, the second monitor, the mail relay, the guest control node, and the runners. Until the authority exists, a guest signs its own certificate; that's a dated decision record, with an end condition. Each service has a live proof script that runs against the real guest with a timeout on every call.</li>
+      <li><strong>The zones.</strong> Generate the three zones from intent, plan the push, read the plan, apply. A change that touches the authoritative servers themselves goes one server at a time, secondary first, with the DNS proof after each. The proof is every published name resolving forward and reverse on all four name servers exactly as the generated zones say.</li>
+      <li><strong>The drills.</strong> A cluster that's never been broken on purpose isn't finished. Three checks, each timed and written down: a live migration over the storage network, each node restarted in turn with the guests following their home rules back, and one node's power pulled without warning. The last one is the one that matters.</li>
+    </ol>
+    <p>After every apply of a root, a second copy of its state goes out, pulled from the bucket and encrypted to the hardware keys as a dated file. The target refuses to run on the guest control node, because a copy that lives on the site isn't a copy.</p>
+
+    <h2>What makes the runbooks trustworthy</h2>
+    <ul>
+      <li><strong>Every command is a task target.</strong> A runbook never says "run this binary with these flags". It names a target, and a person and CI call the same targets. There's one entry point, and a step that isn't in it doesn't exist.</li>
+      <li><strong>The proofs are scripts, not tests.</strong> A live proof reaches the real site, puts a timeout on every remote call, and exits non-zero on a miss. CI never runs them. But the logic that judges the result is pure and has unit tests on fabricated facts, so no guest being down and no edit to intent can turn the test suite red.</li>
+      <li><strong>The manual steps are listed, numbered, and honest.</strong> Each runbook opens with the things the repository cannot do: the console, the BIOS, the first key on a node, the token in the password manager. Each one gates the steps after it. Pretending they're automated would be the worst kind of lie, because it's the one you discover during the rebuild.</li>
+      <li><strong>A technology new to the site gets a runbook and a guide before its milestone closes.</strong> The runbook says how to operate it. The guide says how it works and why it was chosen. The decision record says what else I considered.</li>
+      <li><strong>The runbooks are read against the tree.</strong> Where a runbook names a pin, a port, or a path, a test checks that it matches what the role actually has. A runbook that drifts from the code fails CI.</li>
+    </ul>
+    <p>I've done this path for real, not as a drill: the cluster was rebuilt from three empty machines while the services it would carry ran on the lifeboat node, and then taken over one guest at a time. The runbook for that is the longest file in the tree, and every step in it was either run or struck out with a date.</p>
+  </main>
+  <footer>
+    <a href="https://github.com/joey-ashley" rel="me">GitHub</a>
+  </footer>
+</body>
+</html>

@@ -25,12 +25,13 @@
     <a href="lab.html" aria-current="page">How I run it</a>
     <a href="lab-architecture.html">Architecture</a>
     <a href="lab-security.html">Security</a>
+    <a href="lab-rebuild.html">Rebuild</a>
   </nav>
   <main id="main">
     <h1>How I run the lab</h1>
     <p class="role">One repository describes the whole site</p>
 
-    <p>The lab is a handful of Proxmox VE hosts, the guests running on them, the network between them, and the services that turn a pile of hardware into a site: DNS, time, a certificate authority, backups, and remote access. I don't configure any of it by hand. One Git repository describes the site, and tooling turns that description into the running thing.</p>
+    <p>The lab is a handful of Proxmox VE hosts, the guests running on them, the network between them, and the services that turn a pile of hardware into a site: DNS, time, a certificate authority, backups, and remote access. I don't configure any of it by hand. One Git repository describes the site, and tooling turns that description into the running thing. The <a href="lab-architecture.html">architecture page</a> says what the running thing is.</p>
 
     <h2>The idea</h2>
     <p>There are two kinds of source in the repository. The first I call <em>intent</em>: what exists, meaning sites, network segments, address blocks, devices, hosts, and services. The second is <em>policy</em>: who is allowed to reach what, written as zones, a reachability matrix, and rule sets. The <a href="lab-security.html">security page</a> draws the matrix. Both are plain text files, validated against a schema, and deliberately written in no particular tool's vocabulary.</p>
@@ -95,7 +96,7 @@
     </ul>
 
     <h2>Why I do it this way</h2>
-    <p>Partly because it's good practice. Mostly because the household actually depends on this stuff, and I'm the only one running it. If I did it by hand I'd be relying on memory, and memory is what fails late at night when DNS is down. This way the repository says what the site is supposed to be, the pipeline checks that it's true, and rebuilding from scratch is a documented procedure instead of a weekend of guessing. When something breaks, I don't have to wonder what I changed. It's in the Git log.</p>
+    <p>Partly because it's good practice. Mostly because the household actually depends on this stuff, and I'm the only one running it. If I did it by hand I'd be relying on memory, and memory is what fails late at night when DNS is down. This way the repository says what the site is supposed to be, the pipeline checks that it's true, and rebuilding from scratch is <a href="lab-rebuild.html">a documented procedure</a> instead of a weekend of guessing. When something breaks, I don't have to wonder what I changed. It's in the Git log.</p>
     <p>The repository is private, but I'm happy to share a read-only copy if you ask.</p>
   </main>
   <footer>
