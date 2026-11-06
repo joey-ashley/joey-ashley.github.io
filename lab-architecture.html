@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecture · Joseph Ashley</title>
+  <meta name="description" content="What the home lab actually is: the gateway, the core, a three-node cluster plus two standalone nodes, the guests by plane, where state lives, how DNS is laid out, and how decisions are recorded.">
+  <link rel="canonical" href="https://joey-ashley.github.io/lab-architecture.html">
+  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161717" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Architecture · Joseph Ashley">
+  <meta property="og:description" content="What the home lab actually is: the gateway, the core, a three-node cluster plus two standalone nodes, the guests by plane, where state lives, how DNS is laid out, and how decisions are recorded.">
+  <meta property="og:url" content="https://joey-ashley.github.io/lab-architecture.html">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <nav aria-label="Pages">
+    <a href="./">Home</a>
+    <a href="lab.html" aria-current="true">The lab</a>
+    <a href="resume.html">Resume</a>
+  </nav>
+  <nav class="sub" aria-label="Lab pages">
+    <a href="lab.html">How I run it</a>
+    <a href="lab-architecture.html" aria-current="page">Architecture</a>
+    <a href="lab-security.html">Security</a>
+  </nav>
+  <main id="main">
+    <h1>Architecture</h1>
+    <p class="role">What the running thing actually is</p>
+
+    <p>The <a href="lab.html">lab page</a> is about how a change flows. This one is about what it flows into. The short version: one gateway, a small switched core, three always-on nodes that form a cluster, two more that deliberately don't, and a few dozen guests sorted by what they're for.</p>
+
+    <figure>
+<svg viewBox="0 0 720 600" role="img" aria-labelledby="site-title" aria-describedby="site-desc">
+<title id="site-title">The site from the outside in: what is beyond the WAN, the gateway, the core switches, the four kinds of host, and the guests on each.</title>
+<desc id="site-desc">Top row: the internet, the tailnet, a small VPS for public names, and an object store for state, all outside the site. Below them the gateway, then the core switches, then four hosts: a three-node always-on cluster on ZFS, a standalone lab node, a standalone lifeboat node, and a NAS. Under the cluster, the guests grouped by plane: names, time, trust, truth and the register, the home page and things, remote access, and the control node and runners. Under the lab node, the lab host. Under the lifeboat node, the backup server and the second monitor.</desc>
+<defs><marker id="ahead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" opacity="0.55"/></marker></defs>
+<rect x="10" y="10" width="700" height="70" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 4"/>
+<text class="small" x="18" y="24">outside the site</text>
+<rect class="box" x="24" y="30" width="150" height="40" rx="4"/>
+<text class="label" x="99.0" y="54.0" text-anchor="middle">the internet</text>
+<rect class="box" x="194" y="30" width="150" height="40" rx="4"/>
+<text class="label" x="269.0" y="48.0" text-anchor="middle">the tailnet</text>
+<text class="small" x="269.0" y="63.0" text-anchor="middle">admin access in</text>
+<rect class="box" x="364" y="30" width="160" height="40" rx="4"/>
+<text class="label" x="444.0" y="48.0" text-anchor="middle">a small VPS</text>
+<text class="small" x="444.0" y="63.0" text-anchor="middle">public names, TLS ends here</text>
+<rect class="box" x="544" y="30" width="152" height="40" rx="4"/>
+<text class="label" x="620.0" y="48.0" text-anchor="middle">object store</text>
+<text class="small" x="620.0" y="63.0" text-anchor="middle">OpenTofu state, locked</text>
+<rect class="box" x="24" y="105" width="672" height="40" rx="4"/>
+<text class="label" x="360.0" y="123.0" text-anchor="middle">the gateway</text>
+<text class="small" x="360.0" y="138.0" text-anchor="middle">owns every policy between segments · DHCP · break-glass WireGuard · no port open from the WAN</text>
+<path class="arrow" d="M99,70 L99,105"/>
+<path class="arrow" d="M269,70 L269,105"/>
+<path class="arrow" d="M444,70 L444,105"/>
+<rect class="box" x="24" y="170" width="672" height="40" rx="4"/>
+<text class="label" x="360.0" y="188.0" text-anchor="middle">the core: two aggregation switches, a rack distribution switch dual-homed to both, the access points</text>
+<text class="small" x="360.0" y="203.0" text-anchor="middle">sixteen VLANs; every node bonds across two switches</text>
+<path class="arrow" d="M360,145 L360,170"/>
+<rect x="10" y="230" width="700" height="360" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 4"/>
+<text class="small" x="18" y="244"></text>
+<rect class="box" x="24" y="250" width="300" height="52" rx="4"/>
+<text class="label" x="174.0" y="274.0" text-anchor="middle">always-on cluster: three nodes</text>
+<text class="small" x="174.0" y="289.0" text-anchor="middle">ZFS on each, replication between them, no shared storage</text>
+<rect class="box" x="344" y="250" width="110" height="52" rx="4"/>
+<text class="label" x="399.0" y="274.0" text-anchor="middle">lab node</text>
+<text class="small" x="399.0" y="289.0" text-anchor="middle">standalone, on demand</text>
+<rect class="box" x="474" y="250" width="110" height="52" rx="4"/>
+<text class="label" x="529.0" y="274.0" text-anchor="middle">lifeboat node</text>
+<text class="small" x="529.0" y="289.0" text-anchor="middle">standalone, always on</text>
+<rect class="box" x="594" y="250" width="102" height="52" rx="4"/>
+<text class="label" x="645.0" y="274.0" text-anchor="middle">NAS</text>
+<text class="small" x="645.0" y="289.0" text-anchor="middle">files, ISOs</text>
+<path class="arrow" d="M174,210 L174,250"/>
+<path class="arrow" d="M399,210 L399,250"/>
+<path class="arrow" d="M529,210 L529,250"/>
+<path class="arrow" d="M645,210 L645,250"/>
+<text class="small" x="174" y="326" text-anchor="middle">guests, by plane</text>
+<rect class="box" x="24" y="336" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="356">names</text>
+<text class="small" x="314" y="356" text-anchor="end">resolvers ×2 · authoritative ×2</text>
+<rect class="box" x="24" y="372" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="392">time</text>
+<text class="small" x="314" y="392" text-anchor="end">two time servers</text>
+<rect class="box" x="24" y="408" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="428">trust</text>
+<text class="small" x="314" y="428" text-anchor="end">the certificate authority</text>
+<rect class="box" x="24" y="444" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="464">truth</text>
+<text class="small" x="314" y="464" text-anchor="end">the source of truth · the asset register</text>
+<rect class="box" x="24" y="480" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="500">the household</text>
+<text class="small" x="314" y="500" text-anchor="end">the home page · home automation</text>
+<rect class="box" x="24" y="516" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="536">remote access</text>
+<text class="small" x="314" y="536" text-anchor="end">subnet routers ×2 · tunnel client</text>
+<rect class="box" x="24" y="552" width="300" height="30" rx="4"/>
+<text class="label" x="34" y="572">operations</text>
+<text class="small" x="314" y="572" text-anchor="end">the control node · CI runners ×2</text>
+<rect class="box" x="344" y="336" width="110" height="30" rx="4"/>
+<text class="label" x="399" y="355" text-anchor="middle">lab host</text>
+<text class="small" x="399" y="378" text-anchor="middle">labs never route</text>
+<text class="small" x="399" y="392" text-anchor="middle">into the site</text>
+<rect class="box" x="474" y="336" width="110" height="30" rx="4"/>
+<text class="label" x="529.0" y="355.0" text-anchor="middle">backup server</text>
+<rect class="box" x="474" y="372" width="110" height="30" rx="4"/>
+<text class="label" x="529.0" y="391.0" text-anchor="middle">second monitor</text>
+<text class="small" x="529" y="420" text-anchor="middle">outside the cluster,</text>
+<text class="small" x="529" y="434" text-anchor="middle">so it can watch it</text>
+<path class="arrow" d="M269,70 L269,105"/>
+<path class="arrow" d="M174,302 L174,336"/>
+<path class="arrow" d="M399,302 L399,336"/>
+<path class="arrow" d="M529,302 L529,336"/>
+<path class="arrow" d="M324,573 L714,573 L714,50 L696,50" stroke-dasharray="3 3"/>
+<text class="small" x="520" y="566" text-anchor="middle">plans and applies read and lock the state</text>
+</svg>
+      <figcaption>The site from the outside in. Solid arrows are the physical path. The dashed line is the one thing that leaves the site on every change: the state of each infrastructure root, locked and encrypted, in an object store.</figcaption>
+    </figure>
+
+    <h2>The hardware, and why it's shaped like that</h2>
+    <p>The gateway owns all inter-segment policy and hands out addresses. Below it, two aggregation switches are the core, with a rack distribution switch hung off both of them and the access points off that. Every node bonds across two switches, so a switch can die without a node noticing much.</p>
+    <p>There are three kinds of compute, and the split is on purpose:</p>
+    <ul>
+      <li><strong>The cluster</strong> is three small, identical nodes, each with local ZFS. There's no shared storage and no Ceph: guests replicate between nodes on a schedule instead. The important guests get an HA resource, a rule for which node is home, and replication every five minutes to every other member. The rest replicate every fifteen minutes to the next node along. Any guest the family can't live without runs here, because this is the part that never sleeps.</li>
+      <li><strong>The lab node</strong> stands alone and holds the lab plane, a container-based network lab with its own routing domain. Nothing in the lab domain is routed anywhere in the site, so a lab can't reach the house no matter how badly I misconfigure it.</li>
+      <li><strong>The lifeboat node</strong> also stands alone, and carries the backup server and the second monitor. That's deliberate: if the cluster is the thing that fails, I want the thing that watches it and the thing that restores it to be somewhere else. Each failure domain gets a watcher outside it.</li>
+    </ul>
+    <p>Two of everything the family or the platform can't live without: two resolvers, two authoritative name servers, two time sources, two subnet routers. One of everything else, with a tested restore.</p>
+
+    <h2>Sixteen segments, seven zones</h2>
+    <p>The network is sixteen VLANs. The subnet of each one has the VLAN number baked into it, so an address tells you which segment it's on without looking anything up, and the IPv6 side uses the same number as its subnet ID. Two of the VLANs, the cluster heartbeat and the storage network, are layer 2 only with no routed path at all. The rest are grouped into the zones the <a href="lab-security.html">security page</a> describes.</p>
+    <p>Guests get static addresses from intent, applied by cloud-init at first boot. The only DHCP pools are on the segments where people and devices live.</p>
+
+    <h2>The guests, by plane</h2>
+    <p>Each guest in intent has a role, a tier, a placement, and a list of the services it offers with their ports. The firewall of each guest is generated from that list with a default of drop, so a port that isn't declared isn't reachable, even from inside its own zone. On the cluster they sort into planes:</p>
+    <ul>
+      <li><strong>Names:</strong> a pair of recursive resolvers and a pair of authoritative servers.</li>
+      <li><strong>Time:</strong> two time servers, handed out by DHCP.</li>
+      <li><strong>Trust:</strong> the certificate authority, an issuing intermediate whose root stays offline.</li>
+      <li><strong>Truth:</strong> the source of truth for addresses and devices, and the asset register beside it.</li>
+      <li><strong>The household:</strong> the home page and the home automation hub, the two things the family actually touches.</li>
+      <li><strong>Remote access:</strong> the pair of subnet routers for the tailnet, and the tunnel client in the DMZ.</li>
+      <li><strong>Operations:</strong> a control node that lives on the site, and two CI runners, all on a segment of their own that only the admin networks can reach.</li>
+    </ul>
+    <p>The layer below DNS doesn't need DNS. The nodes pin each other in their hosts files from a generated list, so the cluster comes up and talks to itself before a single resolver exists.</p>
+
+    <h2>Where state lives</h2>
+    <p>The infrastructure code is four OpenTofu roots: one that owns the state bucket itself, one that owns the GitHub repository and its branch rules, one that builds guests, and one that builds the cluster's HA resources, replication, and backup jobs. The guest and platform roots run once per placement, meaning once per Proxmox API, with a state object of their own each time, so a run for one placement can never read or write another's.</p>
+    <p>Every state object lives in an object store, locked on every plan and apply, and encrypted on the control node before it leaves. No state file is ever in Git. After every apply I pull a second copy and encrypt it to the two hardware keys as a dated file somewhere else. The roots never read each other's state. The only way facts move between them is through the variables the generators write, which keeps the dependency graph visible in the tree instead of hidden in a remote-state lookup.</p>
+    <p>A control node is any machine that can plan, apply, decrypt, and run the plays: the laptop, the workstation, and one guest on the site. The tree pins every tool a control node runs, down to the version, and a check target prints one line per requirement with the runbook section that fixes it. Targets that should only ever run from a laptop, like a state backup or the CA play, refuse to run on the guest.</p>
+
+    <h2>DNS</h2>
+    <p>Every name in the site is compiled from intent. The generator writes three zones per site: the forward zone, the IPv4 reverse zone, and the IPv6 reverse zone, with a PTR for every address record, so forward and reverse never disagree. A host is published only once it carries a tag saying it's live. Until then it has a name and an address in intent and no record anywhere, which is how a planned guest can be fully described without lying to the resolvers about whether it exists.</p>
+    <p>Service aliases follow a few rules: an alias with one target is a CNAME, an alias with two is a round-robin pair of A records, and a VIP is an A record on the shared address with a short TTL. A pair's alias is published only when both members are. The generated zones are pushed with octoDNS into the primary authoritative server, and the secondary follows by zone transfer.</p>
+    <p>The resolvers stub those zones to the authoritative pair, and they do one more thing: they answer the handful of public names with the internal address of the guest that serves them. From inside the house you reach a public application directly. From outside you reach it through the tunnel. The public zone is compiled the same way from its own small intent file, holds only the records I've declared, and refuses to delete anything unless told to in so many words.</p>
+
+    <h2>Decisions are records</h2>
+    <p>Any decision that will matter past the day I made it becomes one file in the repository, in a fixed shape: a status line, then four sections, Context, Options considered, Decision, and Consequences. The file name is the title. A test holds the shape, so a record missing a section fails CI like anything else.</p>
+    <p>The rules around them matter more than the shape:</p>
+    <ul>
+      <li>A record is never edited into saying something different. It can grow by a dated addition that reverses nothing and changes no word that stood before, and it can be corrected on the day it merged with its status line saying so. That's it.</li>
+      <li>Reversing a decision means writing a new record that names the one it replaces, setting the old one to "superseded by" the new file, and making the code change in the same pull request. The reasoning and the change land together, or not at all.</li>
+      <li>Records chain. One question in the lab, how the nodes' uplinks are cabled, has six records, each one replacing a single item of the one before and carrying the rest forward. Reading the chain is reading how my understanding changed, in order, with dates.</li>
+    </ul>
+    <p>The practical effect is that the repository answers "why is it like this?" as reliably as it answers "what is it?". When I come back to something six months later, the options I didn't take are still written down next to the one I did.</p>
+  </main>
+  <footer>
+    <a href="https://github.com/joey-ashley" rel="me">GitHub</a>
+  </footer>
+</body>
+</html>
